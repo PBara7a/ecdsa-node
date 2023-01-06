@@ -7,14 +7,12 @@ app.use(cors());
 app.use(express.json());
 
 const secp = require("ethereum-cryptography/secp256k1");
-const { toHex, utf8ToBytes } = require("ethereum-cryptography/utils");
-const { keccak256 } = require("ethereum-cryptography/keccak");
+const { wallets, hashMessage, getAddress } = require("./utils/wallets");
 
-const wallets = require("./utils/wallets");
 const balances = {
-  [toHex(wallets[0].publicKey)]: 100,
-  [toHex(wallets[1].publicKey)]: 50,
-  [toHex(wallets[2].publicKey)]: 75,
+  [wallets[0].address]: 100,
+  [wallets[1].address]: 50,
+  [wallets[2].address]: 75,
 };
 
 app.get("/balance/:address", (req, res) => {
@@ -34,7 +32,7 @@ app.post("/send", async (req, res) => {
 
   const isValidTransaction = secp.verify(signature, messageHash, senderPublicKey);
 
-  const sender = toHex(senderPublicKey);
+  const sender = getAddress(senderPublicKey);
 
   setInitialBalance(sender);
   setInitialBalance(recipient);
@@ -60,9 +58,4 @@ function setInitialBalance(address) {
   if (!balances[address]) {
     balances[address] = 0;
   }
-}
-
-function hashMessage(message) {
-  const bytes = utf8ToBytes(message);
-  return keccak256(bytes);
 }
